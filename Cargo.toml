@@ -32,10 +32,6 @@ name = "fasten_combine"
 path = "src/bin/fasten_combine.rs"
 
 [[bin]]
-name = "fasten_kmer_aa"
-path = "src/bin/fasten_kmer_aa.rs"
-
-[[bin]]
 name = "fasten_kmer"
 path = "src/bin/fasten_kmer.rs"
 
