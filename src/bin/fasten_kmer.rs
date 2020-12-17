@@ -18,11 +18,12 @@ fn main(){
 
     // script-specific options
     opts.optopt("k","kmer-length","The size of the kmer","INT");
+    opts.optopt("a","amino-acid","Process as regular string (no revcomp, as is for aa)","BOOL");
 
     let matches = opts.parse(&args[1..]).expect("ERROR: could not parse parameters");
 
     if matches.opt_present("help") {
-        println!("Counts kmers. Doesn't anyone remember that Chander is an analyst?\n{}", opts.usage(&opts.short_usage(&args[0])));
+        println!("Counts kmers. Doesn't anyone remember that Chandler is an analyst?\n{}", opts.usage(&opts.short_usage(&args[0])));
         std::process::exit(0);
     }
     if matches.opt_present("paired-end") {
@@ -39,7 +40,16 @@ fn main(){
             21
         }
     };
-
+    let aa_mode={
+        if matches.opt_present("amino-acid") {
+            matches.opt_str("amino-acid")
+                .expect("ERROR: could not understand parameter --amino-acid")
+                .parse()
+                .expect("ERROR: --amino-acid is not an BOOL")
+        } else {
+            true
+        }
+    };
 
     let filename = "/dev/stdin";
     
@@ -48,6 +58,7 @@ fn main(){
     let my_buffer=BufReader::new(my_file);
     let mut buffer_iter = my_buffer.lines();
     let mut kmer_hash :HashMap<String,u32> = HashMap::new();
+    if aa_mode == false{
     while let Some(_) = buffer_iter.next() {
         let seq = buffer_iter.next().expect("ERROR reading a sequence line")
             .expect("ERROR reading a sequence line");
@@ -76,7 +87,30 @@ fn main(){
             *kmer_count += 1;
         }
     }
+}
 
+if aa_mode == true{
+    while let Some(_) = buffer_iter.next() {
+        let seq = buffer_iter.next().expect("ERROR reading a sequence line")
+            .expect("ERROR reading a sequence line");
+        buffer_iter.next();
+        buffer_iter.next();
+
+        let seq_length=seq.len();
+        // Don't count short sequences
+        if seq_length < kmer_length {
+            continue;
+        }
+
+        let my_num_kmers=seq_length - kmer_length + 1;
+        for idx in 0..my_num_kmers {
+            // increment the kmer count by reference
+            let kmer_count = kmer_hash.entry(String::from(&seq[idx..kmer_length+idx])).
+                or_insert(0);
+            *kmer_count += 1;
+        }
+    }
+}
 
     // TODO in the future: somehow efficiently remove reverse
     // complement kmers before printing because it is basically
